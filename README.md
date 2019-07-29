@@ -1,11 +1,13 @@
 # StyCo README
 
-Transform tags with style-props to styled components
-
-## Known Issues
-
-- Does only work for TSX-Files
-- Newline is left after removing style-prop
-- eslint-config is ignored (tabs or spaces?)
+Transform HTML-Tags with style-props to styled components
 
 ---
+
+![Demo](./demo.gif)
+
+## Improvements
+
+- Also enable functionality for jsx-files
+- read configuration from eslint-config (tabs or spaces? etc.)
+- Command should be executable non only in the line of the tag-name

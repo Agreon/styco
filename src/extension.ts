@@ -103,13 +103,13 @@ const findInsertPlace = (editor: vscode.TextEditor) => {
   return editor.document.positionAt(matches.index + matches[0].length + 1);
 };
 
-const createStyco = (
+const createStyco = async (
   editor: vscode.TextEditor,
   position: vscode.Position,
   oldTag: string,
   stycoName: string
 ) => {
-  const regexStyleProp = /(style=\{\{(.|\n)*?\}\})/g;
+  const regexStyleProp = /((\n)( )*style=\{\{(.|\n)*?\}\})(\n)( )*/g;
   const { document } = editor;
   const textAfterCursor = document
     .getText()
@@ -133,7 +133,7 @@ const createStyco = (
     .filter(row => row.trim().length > 2)
     .map(row => {
       const parts = row.trim().split(":");
-      return `\t${camelCaseToKebabCase(parts[0])}:${parts[1]}`;
+      return `  ${camelCaseToKebabCase(parts[0])}:${parts[1]}`;
     })
     .join(";\n");
 
@@ -145,13 +145,13 @@ const createStyco = (
 
   const insertPosition = findInsertPlace(editor);
 
-  editor.edit(editBuilder => {
+  await editor.edit(editBuilder => {
     editBuilder.insert(insertPosition, component);
 
     // Remove old prop
     editBuilder.delete(
       new vscode.Range(
-        document.positionAt(match.index + document.offsetAt(position) - 1),
+        document.positionAt(match.index + document.offsetAt(position)),
         document.positionAt(
           match.index + document.offsetAt(position) + match[0].length
         )
@@ -212,7 +212,7 @@ export function activate(context: vscode.ExtensionContext) {
       await replaceTags(editor, cursorPosition, selectedTag, stycoName);
 
       try {
-        createStyco(editor, cursorPosition, selectedTag.name, stycoName);
+        await createStyco(editor, cursorPosition, selectedTag.name, stycoName);
       } catch (error) {
         vscode.window.showInformationMessage(error.message);
       }
