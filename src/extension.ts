@@ -125,18 +125,23 @@ const createStyco = (
   const block = content
     .replace("style={{", "")
     .replace("}}", "")
-    .replace(/("|\n)/g, "")
+    .replace(/("|'|\n)/g, "")
     .trim();
 
   const transformedStyles = block
     .split(",")
+    .filter(row => row.trim().length > 2)
     .map(row => {
       const parts = row.trim().split(":");
       return `\t${camelCaseToKebabCase(parts[0])}:${parts[1]}`;
     })
     .join(";\n");
 
-  const component = `\nconst ${stycoName} = styled(${oldTag})\`\n${transformedStyles};\n\`;\n`;
+  const isStandardTag = oldTag[0] === oldTag[0].toLowerCase();
+
+  const component = isStandardTag
+    ? `\nconst ${stycoName} = styled.${oldTag}\`\n${transformedStyles};\n\`;\n`
+    : `\nconst ${stycoName} = styled(${oldTag})\`\n${transformedStyles};\n\`;\n`;
 
   const insertPosition = findInsertPlace(editor);
 
