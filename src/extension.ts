@@ -109,7 +109,7 @@ const createStyco = async (
   oldTag: string,
   stycoName: string
 ) => {
-  const regexStyleProp = /((\n)( )*style=\{\{(.|\n)*?\}\})(\n)( )*/g;
+  const regexStyleProp = /((\n)*( )*style=\{\{(.|\n)*?\}\})(\n)*( )*/g;
   const { document } = editor;
   const textAfterCursor = document
     .getText()
@@ -145,19 +145,22 @@ const createStyco = async (
 
   const insertPosition = findInsertPlace(editor);
 
-  await editor.edit(editBuilder => {
-    editBuilder.insert(insertPosition, component);
+  await editor.edit(
+    editBuilder => {
+      editBuilder.insert(insertPosition, component);
 
-    // Remove old prop
-    editBuilder.delete(
-      new vscode.Range(
-        document.positionAt(match.index + document.offsetAt(position)),
-        document.positionAt(
-          match.index + document.offsetAt(position) + match[0].length
+      // Remove old prop
+      editBuilder.delete(
+        new vscode.Range(
+          document.positionAt(match.index + document.offsetAt(position)),
+          document.positionAt(
+            match.index + document.offsetAt(position) + match[0].length
+          )
         )
-      )
-    );
-  });
+      );
+    },
+    { undoStopBefore: false, undoStopAfter: false }
+  );
 };
 
 const findTagNameAndPosition = (
@@ -213,6 +216,8 @@ export function activate(context: vscode.ExtensionContext) {
 
       try {
         await createStyco(editor, cursorPosition, selectedTag.name, stycoName);
+
+        await editor.document.save();
       } catch (error) {
         vscode.window.showInformationMessage(error.message);
       }
