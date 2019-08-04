@@ -26,6 +26,28 @@ const findClosingTag = (textToCheck: string, pos: number, tagName: string) => {
   return null;
 };
 
+const hasTagChildren = (textToCheck: string, offset: number) => {
+  const t = textToCheck.substring(offset);
+  const matches = t.match(/(}([^{])*)>/g);
+
+  if (!matches || !matches.length) {
+    throw Error("Did not find the end of the current tag");
+  }
+
+  for (let i = 0; i < matches[0].length; i++) {
+    if (matches[0][i] === ">" && i > 0) {
+      if (matches[0][i - 1] === "/") {
+        return false;
+      } else {
+        // Break as we already found the end of the tag
+        return true;
+      }
+    }
+  }
+
+  return true;
+};
+
 const replaceTags = async (
   editor: vscode.TextEditor,
   cursorPositon: vscode.Position,
@@ -37,15 +59,23 @@ const replaceTags = async (
 ) => {
   const document = editor.document;
 
-  const pairedTagPos = findClosingTag(
+  let hasChildren = hasTagChildren(
     document.getText(),
-    document.offsetAt(cursorPositon),
-    oldTag.name
+    document.offsetAt(cursorPositon)
   );
 
-  if (!pairedTagPos) {
-    // TODO:
-    return null;
+  let pairedTagPos: number | null = null;
+
+  if (hasChildren) {
+    pairedTagPos = findClosingTag(
+      document.getText(),
+      document.offsetAt(cursorPositon),
+      oldTag.name
+    );
+
+    if (!pairedTagPos) {
+      throw Error("Did not find a matching closing tag");
+    }
   }
 
   await editor.edit(
@@ -58,20 +88,19 @@ const replaceTags = async (
         ),
         newTag
       );
-
-      // Replace closing-tag
-      editBuilder.replace(
-        new vscode.Range(
-          document.positionAt(pairedTagPos + 1), // + <
-          document.positionAt(pairedTagPos + oldTag.name.length + 2) // + < + /
-        ),
-        "/" + newTag
-      );
+      if (hasChildren) {
+        // Replace closing-tag
+        editBuilder.replace(
+          new vscode.Range(
+            document.positionAt(pairedTagPos! + 1), // + <
+            document.positionAt(pairedTagPos! + oldTag.name.length + 2) // + < + /
+          ),
+          "/" + newTag
+        );
+      }
     },
     { undoStopBefore: false, undoStopAfter: false }
   );
-
-  return pairedTagPos;
 };
 
 const camelCaseToKebabCase = (input: string) => {
@@ -89,7 +118,7 @@ const camelCaseToKebabCase = (input: string) => {
 
 // TODO: Only works for tsx
 const findInsertPlace = (editor: vscode.TextEditor) => {
-  const importRegex = /(import (.)* from (.)*)/g;
+  const importRegex = /(import (.|\n)* from (.)*)/g;
   const text = editor.document.getText();
   let result = null;
   let matches = null;
@@ -122,15 +151,21 @@ const createStyco = async (
   }
 
   const content = match[0];
-  const block = content
+  const styles = content
     .replace("style={{", "")
     .replace("}}", "")
-    .replace(/("|'|\n)/g, "")
-    .trim();
+    // Split at Last , (Also, if Only number is set it is recognized in first part)
+    .split(/((: ([0-9]+),)|(('|"),))/g)
+    .filter(s => s && s.trim().length > 2);
 
-  const transformedStyles = block
-    .split(",")
-    .filter(row => row.trim().length > 2)
+  if (!styles) {
+    throw new Error("No styles found");
+  }
+
+  const transformedStyles = styles
+    // Remove ',",\n
+    .map(style => style.replace(/("|'|\n)/g, "").trim())
+    // Transform camel-case
     .map(row => {
       const parts = row.trim().split(":");
       return `  ${camelCaseToKebabCase(parts[0])}:${parts[1]}`;
@@ -212,9 +247,8 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
-      await replaceTags(editor, cursorPosition, selectedTag, stycoName);
-
       try {
+        await replaceTags(editor, cursorPosition, selectedTag, stycoName);
         await createStyco(editor, cursorPosition, selectedTag.name, stycoName);
 
         await editor.document.save();
