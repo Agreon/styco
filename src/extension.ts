@@ -140,14 +140,26 @@ const createStyco = async (
 ) => {
   const regexStyleProp = /((\n)*( )*style=\{\{(.|\n)*?\}\})(\n)*( )*/g;
   const { document } = editor;
+  // If tag is lower case => Don't surround with ()
+  const isStandardTag = oldTag[0] === oldTag[0].toLowerCase();
+  const insertPosition = findInsertPlace(editor);
+
   const textAfterCursor = document
     .getText()
     .substring(document.offsetAt(position));
 
   const match = regexStyleProp.exec(textAfterCursor);
 
+  // Just create a empty styco if no style prop was found
   if (!match || !match.length) {
-    throw Error("Could not find style-prop");
+    const newComponent = isStandardTag
+      ? `\nconst ${stycoName} = styled.${oldTag}\`\`;\n`
+      : `\nconst ${stycoName} = styled(${oldTag})\`\`;\n`;
+
+    editor.edit(editBuilder => {
+      editBuilder.insert(insertPosition, newComponent);
+    });
+    return;
   }
 
   const content = match[0];
@@ -172,13 +184,9 @@ const createStyco = async (
     })
     .join(";\n");
 
-  const isStandardTag = oldTag[0] === oldTag[0].toLowerCase();
-
   const component = isStandardTag
     ? `\nconst ${stycoName} = styled.${oldTag}\`\n${transformedStyles};\n\`;\n`
     : `\nconst ${stycoName} = styled(${oldTag})\`\n${transformedStyles};\n\`;\n`;
-
-  const insertPosition = findInsertPlace(editor);
 
   await editor.edit(
     editBuilder => {

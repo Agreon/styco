@@ -2,7 +2,7 @@
   "name": "styco",
   "displayName": "styco",
   "description": "Transform tags with style-props to styled components",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "engines": {
     "vscode": "^1.36.0"
   },
@@ -18,12 +18,10 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "extension.styco",
-        "title": "StyCo"
-      }
-    ]
+    "commands": [{
+      "command": "extension.styco",
+      "title": "StyCo"
+    }]
   },
   "scripts": {
     "vscode:prepublish": "yarn run compile",
