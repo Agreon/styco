@@ -7,6 +7,7 @@ All notable changes to the "styco" extension will be documented in this file.
 ### Features
 
 - Create a empty styled component if no style prop is found (#6)
+- Command is now executable not only in the line of the tag-name, but also on the lines below (#3)
 
 ### Bugfixes
 

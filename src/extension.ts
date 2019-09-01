@@ -1,5 +1,10 @@
 import * as vscode from "vscode";
 
+interface Tag {
+  name: string;
+  position: number;
+}
+
 const findClosingTag = (textToCheck: string, pos: number, tagName: string) => {
   let depth: number = 0;
 
@@ -26,13 +31,7 @@ const findClosingTag = (textToCheck: string, pos: number, tagName: string) => {
   return null;
 };
 
-const hasTagChildren = (
-  textToCheck: string,
-  oldTag: {
-    name: string;
-    position: number;
-  }
-) => {
+const hasTagChildren = (textToCheck: string, oldTag: Tag) => {
   const t = textToCheck.substring(oldTag.position);
 
   // Check if Tag is directly closed
@@ -64,11 +63,7 @@ const hasTagChildren = (
 
 const replaceTags = async (
   editor: vscode.TextEditor,
-  cursorPositon: vscode.Position,
-  oldTag: {
-    name: string;
-    position: number;
-  },
+  oldTag: Tag,
   newTag: string
 ) => {
   const document = editor.document;
@@ -80,7 +75,7 @@ const replaceTags = async (
   if (hasChildren) {
     pairedTagPos = findClosingTag(
       document.getText(),
-      document.offsetAt(cursorPositon),
+      oldTag.position,
       oldTag.name
     );
 
@@ -154,10 +149,7 @@ const generateStyco = (stycoName: string, oldName: string, styles: string) => {
 
 const createStyco = async (
   editor: vscode.TextEditor,
-  oldTag: {
-    name: string;
-    position: number;
-  },
+  oldTag: Tag,
   stycoName: string
 ) => {
   const regexStyleProp = /((\n)*( )*style=\{\{(.|\n)*?\}\})(\n)*( )*/g;
@@ -228,20 +220,30 @@ const createStyco = async (
   );
 };
 
-const findTagNameAndPosition = (
-  document: vscode.TextDocument,
-  position: vscode.Position
-) => {
-  const regex = /[<]([^\s|>]*)/g;
-  const matches = regex.exec(document.lineAt(position).text);
+const findTagNameAndPosition = (editor: vscode.TextEditor) => {
+  const { document } = editor;
+  const position = editor.selection.active;
 
-  if (!matches || matches.length !== 2) {
-    return null;
+  const regex = /[<]([^\s|>]*)/g;
+
+  const currentLine = document.lineAt(position);
+
+  // Go reverse through every line to find a HTML-Tag
+  for (let i = currentLine.lineNumber; i > 0; i--) {
+    const line = document.lineAt(i);
+
+    const matches = regex.exec(line.text);
+
+    if (!matches || matches.length !== 2) {
+      continue;
+    }
+
+    return {
+      name: matches[1],
+      position: document.offsetAt(line.range.start) + matches.index
+    };
   }
-  return {
-    name: matches[1],
-    position: document.offsetAt(position) - (position.character - matches.index)
-  };
+  return null;
 };
 
 export function activate(context: vscode.ExtensionContext) {
@@ -259,12 +261,8 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
 
-      const cursorPosition = editor.selection.active;
       // Current tag
-      const selectedTag = findTagNameAndPosition(
-        editor.document,
-        cursorPosition
-      );
+      const selectedTag = findTagNameAndPosition(editor);
 
       if (!selectedTag || !selectedTag.name.length) {
         vscode.window.showInformationMessage("No tag to replace found");
@@ -278,7 +276,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
 
       try {
-        await replaceTags(editor, cursorPosition, selectedTag, stycoName);
+        await replaceTags(editor, selectedTag, stycoName);
         await createStyco(editor, selectedTag, stycoName);
 
         await editor.document.save();
