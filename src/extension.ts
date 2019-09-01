@@ -26,10 +26,24 @@ const findClosingTag = (textToCheck: string, pos: number, tagName: string) => {
   return null;
 };
 
-const hasTagChildren = (textToCheck: string, offset: number) => {
-  const t = textToCheck.substring(offset);
-  const matches = t.match(/(}([^{])*)>/g);
+const hasTagChildren = (
+  textToCheck: string,
+  oldTag: {
+    name: string;
+    position: number;
+  }
+) => {
+  const t = textToCheck.substring(oldTag.position);
 
+  // Check if Tag is directly closed
+  if (t[oldTag.name.length + 1] === ">") {
+    return true;
+  } else if (t[oldTag.name.length + 1] === "/") {
+    return false;
+  }
+
+  // Get the end of the tag
+  const matches = t.match(/(}([^{])*)>/g);
   if (!matches || !matches.length) {
     throw Error("Did not find the end of the current tag");
   }
@@ -59,10 +73,7 @@ const replaceTags = async (
 ) => {
   const document = editor.document;
 
-  let hasChildren = hasTagChildren(
-    document.getText(),
-    document.offsetAt(cursorPositon)
-  );
+  const hasChildren = hasTagChildren(document.getText(), oldTag);
 
   let pairedTagPos: number | null = null;
 
@@ -132,33 +143,46 @@ const findInsertPlace = (editor: vscode.TextEditor) => {
   return editor.document.positionAt(matches.index + matches[0].length + 1);
 };
 
+const generateStyco = (stycoName: string, oldName: string, styles: string) => {
+  // If tag is lower case => Don't surround with ()
+  const isStandardTag = oldName[0] === oldName[0].toLowerCase();
+
+  return isStandardTag
+    ? `\nconst ${stycoName} = styled.${oldName}\`\n${styles}\n\`;\n`
+    : `\nconst ${stycoName} = styled(${oldName})\`\n${styles}\n\`;\n`;
+};
+
 const createStyco = async (
   editor: vscode.TextEditor,
-  position: vscode.Position,
-  oldTag: string,
+  oldTag: {
+    name: string;
+    position: number;
+  },
   stycoName: string
 ) => {
   const regexStyleProp = /((\n)*( )*style=\{\{(.|\n)*?\}\})(\n)*( )*/g;
   const { document } = editor;
-  // If tag is lower case => Don't surround with ()
-  const isStandardTag = oldTag[0] === oldTag[0].toLowerCase();
+
   const insertPosition = findInsertPlace(editor);
 
-  const textAfterCursor = document
-    .getText()
-    .substring(document.offsetAt(position));
-
-  const match = regexStyleProp.exec(textAfterCursor);
+  const textAfterTagName = document.getText().substring(oldTag.position);
+  const match = regexStyleProp.exec(textAfterTagName);
 
   // Just create a empty styco if no style prop was found
   if (!match || !match.length) {
-    const newComponent = isStandardTag
-      ? `\nconst ${stycoName} = styled.${oldTag}\`\`;\n`
-      : `\nconst ${stycoName} = styled(${oldTag})\`\`;\n`;
-
-    editor.edit(editBuilder => {
-      editBuilder.insert(insertPosition, newComponent);
-    });
+    editor.edit(
+      editBuilder => {
+        editBuilder.insert(
+          insertPosition,
+          generateStyco(stycoName, oldTag.name, "")
+        );
+      },
+      { undoStopBefore: false, undoStopAfter: false }
+    );
+    // Move cursor to newly created styco
+    const mousePosition = insertPosition.with(insertPosition.line + 2, 2);
+    const newSel = new vscode.Selection(mousePosition, mousePosition);
+    editor.selection = newSel;
     return;
   }
 
@@ -182,23 +206,21 @@ const createStyco = async (
       const parts = row.trim().split(":");
       return `  ${camelCaseToKebabCase(parts[0])}:${parts[1]}`;
     })
-    .join(";\n");
-
-  const component = isStandardTag
-    ? `\nconst ${stycoName} = styled.${oldTag}\`\n${transformedStyles};\n\`;\n`
-    : `\nconst ${stycoName} = styled(${oldTag})\`\n${transformedStyles};\n\`;\n`;
+    .join(";\n")
+    .concat(";");
 
   await editor.edit(
     editBuilder => {
-      editBuilder.insert(insertPosition, component);
+      editBuilder.insert(
+        insertPosition,
+        generateStyco(stycoName, oldTag.name, transformedStyles)
+      );
 
       // Remove old prop
       editBuilder.delete(
         new vscode.Range(
-          document.positionAt(match.index + document.offsetAt(position)),
-          document.positionAt(
-            match.index + document.offsetAt(position) + match[0].length
-          )
+          document.positionAt(match.index + oldTag.position),
+          document.positionAt(match.index + oldTag.position + match[0].length)
         )
       );
     },
@@ -210,7 +232,7 @@ const findTagNameAndPosition = (
   document: vscode.TextDocument,
   position: vscode.Position
 ) => {
-  const regex = /[<]([^\s]*)/g;
+  const regex = /[<]([^\s|>]*)/g;
   const matches = regex.exec(document.lineAt(position).text);
 
   if (!matches || matches.length !== 2) {
@@ -257,7 +279,7 @@ export function activate(context: vscode.ExtensionContext) {
 
       try {
         await replaceTags(editor, cursorPosition, selectedTag, stycoName);
-        await createStyco(editor, cursorPosition, selectedTag.name, stycoName);
+        await createStyco(editor, selectedTag, stycoName);
 
         await editor.document.save();
       } catch (error) {

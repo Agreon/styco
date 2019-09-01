@@ -2,10 +2,12 @@
 
 All notable changes to the "styco" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
 ## [0.0.6]
 
 ### Features
 
 - Create a empty styled component if no style prop is found (#6)
+
+### Bugfixes
+
+- If Cursor is placed on style-prop in the same line, the style-prop is now found (#5)
