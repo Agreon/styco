@@ -5,15 +5,15 @@ interface Tag {
   position: number;
 }
 
-const findClosingTag = (textToCheck: string, pos: number, tagName: string) => {
+const findClosingTag = (textToCheck: string, tag: Tag) => {
   let depth: number = 0;
 
   let regex = new RegExp(
-    "<(/?)(" + tagName + ")(?:\\s[^\\s>]*?[^\\s\\/>]+?)*?>",
+    "<(/?)(" + tag.name + ")(?:\\s[^\\s>]*?[^\\s\\/>]+?)*?>",
     "g"
   );
 
-  const text = textToCheck.substring(pos);
+  const text = textToCheck.substring(tag.position + tag.name.length);
 
   let result = null;
   while ((result = regex.exec(text)) !== null) {
@@ -22,7 +22,7 @@ const findClosingTag = (textToCheck: string, pos: number, tagName: string) => {
       depth++;
     } else {
       if (depth === 0) {
-        return result.index + pos;
+        return result.index + tag.position + tag.name.length;
       }
       depth--;
     }
@@ -73,11 +73,7 @@ const replaceTags = async (
   let pairedTagPos: number | null = null;
 
   if (hasChildren) {
-    pairedTagPos = findClosingTag(
-      document.getText(),
-      oldTag.position,
-      oldTag.name
-    );
+    pairedTagPos = findClosingTag(document.getText(), oldTag);
 
     if (!pairedTagPos) {
       throw Error("Did not find a matching closing tag");
@@ -211,7 +207,7 @@ const createStyco = async (
       // Remove old prop
       editBuilder.delete(
         new vscode.Range(
-          document.positionAt(match.index + oldTag.position),
+          document.positionAt(match.index + oldTag.position + 1),
           document.positionAt(match.index + oldTag.position + match[0].length)
         )
       );

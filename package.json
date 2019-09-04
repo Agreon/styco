@@ -1,8 +1,8 @@
 {
   "name": "styco",
-  "displayName": "styco",
-  "description": "Transform tags with style-props to styled components",
-  "version": "0.0.6",
+  "displayName": "styco - styled component converter",
+  "description": "Transform tags with inline style-props to styled components",
+  "version": "0.0.7",
   "engines": {
     "vscode": "^1.36.0"
   },
@@ -11,7 +11,13 @@
   },
   "publisher": "DanielHuth",
   "categories": [
-    "Other"
+    "Formatters"
+  ],
+  "keywords": [
+    "css",
+    "formatter",
+    "converter",
+    "styled components"
   ],
   "activationEvents": [
     "onCommand:extension.styco"
