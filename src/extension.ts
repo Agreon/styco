@@ -150,6 +150,9 @@ const createStyco = async (
 ) => {
   const regexStyleProp = /((\n)*( )*style=\{\{(.|\n)*?\}\})(\n)*( )*/g;
   const { document } = editor;
+  const shouldOrderStyle = vscode.workspace
+    .getConfiguration("styco")
+    .get("orderStyleByName");
 
   const insertPosition = findInsertPlace(editor);
 
@@ -188,11 +191,17 @@ const createStyco = async (
 
   const transformedStyles = styles
     // Remove ',",\n
-    .map(style => style.replace(/("|'|\n)/g, "").trim())
+    .map(style => style.replace(/("|'|\n)/g, "").trim());
+
+  if (shouldOrderStyle) {
+    transformedStyles.sort();
+  }
+
+  const stringifiedStyles = transformedStyles
     // Transform camel-case
     .map(row => {
       const parts = row.trim().split(":");
-      return `  ${camelCaseToKebabCase(parts[0])}:${parts[1]}`;
+      return `\t${camelCaseToKebabCase(parts[0])}:${parts[1]}`;
     })
     .join(";\n")
     .concat(";");
@@ -201,7 +210,7 @@ const createStyco = async (
     editBuilder => {
       editBuilder.insert(
         insertPosition,
-        generateStyco(stycoName, oldTag.name, transformedStyles)
+        generateStyco(stycoName, oldTag.name, stringifiedStyles)
       );
 
       // Remove old prop
