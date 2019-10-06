@@ -24,10 +24,22 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [{
-      "command": "extension.styco",
-      "title": "StyCo"
-    }]
+    "configuration": {
+      "title": "StyCo",
+      "properties": {
+        "styco.orderStyleByName": {
+          "type": "boolean",
+          "default": false,
+          "description": "Order styles by name alphabetically"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "extension.styco",
+        "title": "StyCo"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "yarn run compile",
