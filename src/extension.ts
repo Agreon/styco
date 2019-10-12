@@ -201,7 +201,7 @@ const createStyco = async (
     // Transform camel-case
     .map(row => {
       const parts = row.trim().split(":");
-      return `\t${camelCaseToKebabCase(parts[0])}:${parts[1]}`;
+      return `  ${camelCaseToKebabCase(parts[0])}:${parts[1]}`;
     })
     .join(";\n")
     .concat(";");

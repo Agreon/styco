@@ -2,6 +2,13 @@
 
 All notable changes to the "styco" extension will be documented in this file.
 
+## [0.0.8]
+
+### Features
+
+- Added a logo.
+- Add an option to sort the generated styled components. (#7 - Thanks to @chengjo0)
+
 ## [0.0.7]
 
 ### Bugfixes
