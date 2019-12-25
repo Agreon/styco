@@ -2,6 +2,10 @@
 
 All notable changes to the "styco" extension will be documented in this file.
 
+## [0.1.0]
+
+- Full rewrite with the Babel-Parser. (Fixes at least #9)
+
 ## [0.0.8]
 
 ### Features
