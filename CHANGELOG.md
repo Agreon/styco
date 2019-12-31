@@ -2,6 +2,10 @@
 
 All notable changes to the "styco" extension will be documented in this file.
 
+## [0.1.1]
+
+- Added a CodeAction to lines that have a `style`-Attribute. This can be disabled by setting `disableCodeAction` to `true`.
+
 ## [0.1.0]
 
 - Full rewrite with the Babel-Parser. (Fixes at least #9)

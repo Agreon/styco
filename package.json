@@ -2,7 +2,7 @@
   "name": "styco",
   "displayName": "styco - styled components converter",
   "description": "Transform tags with inline style-props to styled components",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "engines": {
     "vscode": "^1.41.0"
   },
@@ -26,6 +26,8 @@
     "extractor"
   ],
   "activationEvents": [
+    "onLanguage:typescriptreact",
+    "onLanguage:javascriptreact",
     "onCommand:extension.styco"
   ],
   "main": "./out/extension.js",
@@ -42,6 +44,11 @@
           "type": "boolean",
           "default": true,
           "description": "Save the file after command execution"
+        },
+        "styco.disableCodeAction": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show a CodeAction if a `style`-Attribute is found"
         }
       }
     },
