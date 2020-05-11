@@ -2,6 +2,10 @@
 
 All notable changes to the "styco" extension will be documented in this file.
 
+## [0.1.3]
+
+- Use webpack for extension bundling.
+- Improved Readme.
 
 ## [0.1.2]
 
