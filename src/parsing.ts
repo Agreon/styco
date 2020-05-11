@@ -7,7 +7,7 @@ import {
   JSXIdentifier,
   JSXAttribute,
   ObjectProperty,
-  StringLiteral
+  StringLiteral,
 } from "@babel/types";
 
 export type Property = { key: string; value: string };
@@ -41,7 +41,7 @@ const findTagAndInsertPosition = (editor: TextEditor, file: File) => {
       if (enter.node.end !== null) {
         insertPosition = enter.node.end;
       }
-    }
+    },
   });
 
   return { selectedElement, insertPosition };
@@ -66,13 +66,13 @@ const getStyleAttribute = (element: JSXElement): IStyleAttribute | null => {
     p => p.type === "ObjectProperty" && p.value.type === "StringLiteral"
   ) as ObjectProperty[]).map(p => ({
     key: p.key.name as string,
-    value: (p.value as StringLiteral).value
+    value: (p.value as StringLiteral).value,
   }));
 
   return {
     start: styleAttr.start!,
     end: styleAttr.end!,
-    properties
+    properties,
   };
 };
 
@@ -80,7 +80,12 @@ export const parseDocument = (editor: TextEditor) => {
   try {
     const file = parse(editor.document.getText(), {
       sourceType: "module",
-      plugins: ["jsx", "typescript", ["decorators", { decoratorsBeforeExport: true }], "classProperties"]
+      plugins: [
+        "jsx",
+        "typescript",
+        ["decorators", { decoratorsBeforeExport: true }],
+        "classProperties",
+      ],
     });
 
     const { selectedElement, insertPosition } = findTagAndInsertPosition(
@@ -101,7 +106,7 @@ export const parseDocument = (editor: TextEditor) => {
       selectedElement,
       elementName,
       insertPosition,
-      styleAttr
+      styleAttr,
     };
   } catch (e) {
     return null;

@@ -2,6 +2,11 @@
 
 All notable changes to the "styco" extension will be documented in this file.
 
+
+## [0.1.2]
+
+- Add support for experimental decorators. (#11 - Thanks to [drj17](https://github.com/drj17))
+
 ## [0.1.1]
 
 - Added a CodeAction to lines that have a `style`-Attribute. This can be disabled by setting `disableCodeAction` to `true`.
@@ -15,7 +20,7 @@ All notable changes to the "styco" extension will be documented in this file.
 ### Features
 
 - Added a logo.
-- Add an option to sort the generated styled components. (#7 - Thanks to @chengjo0)
+- Add an option to sort the generated styled components. (#7 - Thanks to [chengjo0](https://github.com/chengjo0))
 
 ## [0.0.7]
 
