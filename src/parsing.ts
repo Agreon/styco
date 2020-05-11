@@ -80,7 +80,7 @@ export const parseDocument = (editor: TextEditor) => {
   try {
     const file = parse(editor.document.getText(), {
       sourceType: "module",
-      plugins: ["jsx", "typescript"]
+      plugins: ["jsx", "typescript", ["decorators", { decoratorsBeforeExport: true }], "classProperties"]
     });
 
     const { selectedElement, insertPosition } = findTagAndInsertPosition(
