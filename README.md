@@ -12,7 +12,7 @@ VSCode Marketplace: [Link](https://marketplace.visualstudio.com/items?itemName=D
 
 ## Usage
 
-Either use the command `StyCo` with `CTRL` + `P` or the code action with `CTRL` + `.` while in the line of the style-attribute.
+Either use the command `StyCo` with `CTRL` + `SHIFT` +  `P` or the code action with `CTRL` + `.` while in the line of the style-attribute.
 
 
 ## Configuration
