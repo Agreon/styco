@@ -2,7 +2,7 @@
   "name": "styco",
   "displayName": "styco - styled components converter",
   "description": "Transform tags with inline style-props to styled components",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "engines": {
     "vscode": "^1.41.0"
   },
@@ -62,7 +62,8 @@
   },
   "scripts": {
     "vscode:prepublish": "webpack --mode production",
-    "webpack": "webpack --mode development"
+    "webpack": "webpack --mode development",
+    "lint": "tslint -c tslint.json 'src/**/*.ts'"
   },
   "devDependencies": {
     "@babel/types": "^7.7.4",

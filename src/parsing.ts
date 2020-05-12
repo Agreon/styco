@@ -63,7 +63,9 @@ const getStyleAttribute = (element: JSXElement): IStyleAttribute | null => {
 
   // Transform properties
   const properties = (styleAttr.value.expression.properties.filter(
-    p => p.type === "ObjectProperty" && p.value.type === "StringLiteral"
+    p =>
+      p.type === "ObjectProperty" &&
+      (p.value.type === "StringLiteral" || p.value.type === "NumericLiteral")
   ) as ObjectProperty[]).map(p => ({
     key: p.key.name as string,
     value: (p.value as StringLiteral).value,
