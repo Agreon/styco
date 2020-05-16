@@ -2,6 +2,12 @@
 
 All notable changes to the "styco" extension will be documented in this file.
 
+
+## [0.1.5]
+
+- Add support for optional chaining.
+- Add support for template literal values. (#15 Thanks to [Stenbaek](https://github.com/Stenbaek))
+
 ## [0.1.4]
 
 - Add support for numeric values.
