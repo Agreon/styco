@@ -8,6 +8,8 @@ import {
   JSXAttribute,
   ObjectProperty,
   StringLiteral,
+  TemplateLiteral,
+  TemplateElement
 } from "@babel/types";
 
 export type Property = { key: string; value: string };
@@ -65,10 +67,15 @@ const getStyleAttribute = (element: JSXElement): IStyleAttribute | null => {
   const properties = (styleAttr.value.expression.properties.filter(
     p =>
       p.type === "ObjectProperty" &&
-      (p.value.type === "StringLiteral" || p.value.type === "NumericLiteral")
+      (p.value.type === "StringLiteral" || p.value.type === "NumericLiteral" || p.value.type === "TemplateLiteral")
   ) as ObjectProperty[]).map(p => ({
     key: p.key.name as string,
-    value: (p.value as StringLiteral).value,
+    value:
+      p.value.type === "TemplateLiteral"
+        ? ((p.value as TemplateLiteral).quasis as TemplateElement[])
+            .map((el) => el.value.raw)
+            .join("")
+        : (p.value as StringLiteral).value,
   }));
 
   return {
