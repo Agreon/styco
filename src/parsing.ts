@@ -87,6 +87,7 @@ export const parseDocument = (editor: TextEditor) => {
         "typescript",
         ["decorators", { decoratorsBeforeExport: true }],
         "classProperties",
+        "optionalChaining",
       ],
     });
 
