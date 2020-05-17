@@ -2,6 +2,7 @@ import { window, workspace, TextEditor, Range } from "vscode";
 import { JSXElement } from "@babel/types";
 import { parseDocument, IStyleAttribute } from "./util/parseDocument";
 import { generateStyledComponent } from "./util/generateStyledComponent";
+import { generateImportStatement } from "./util/generateImportStatement";
 
 export const COMMAND_NAME = "extension.styco";
 
@@ -25,6 +26,7 @@ export const stycoCommand = async () => {
     elementName,
     insertPosition,
     styleAttr,
+    importStatementExisting,
   } = documentInformation;
 
   const stycoName = await window.showInputBox({
@@ -36,13 +38,19 @@ export const stycoCommand = async () => {
     window.showInformationMessage("Please enter a name");
     return;
   }
-
   const component = generateStyledComponent(elementName, stycoName, styleAttr);
+
+  const importStatement =
+    importStatementExisting ||
+    workspace.getConfiguration("styco").get("insertImportStatement") === false
+      ? null
+      : await generateImportStatement(editor.document.uri);
 
   try {
     await modifyDocument(
       editor,
       component,
+      importStatement,
       insertPosition,
       selectedElement,
       styleAttr,
@@ -52,7 +60,6 @@ export const stycoCommand = async () => {
     window.showInformationMessage("Could not update document");
     return;
   }
-
   if (workspace.getConfiguration("styco").get("saveAfterExecute")) {
     await editor.document.save();
   }
@@ -61,6 +68,7 @@ export const stycoCommand = async () => {
 const modifyDocument = async (
   editor: TextEditor,
   styledComponent: string,
+  importStatement: string | null,
   insertPosition: number,
   oldElement: JSXElement,
   styleAttr: IStyleAttribute | null,
@@ -72,11 +80,25 @@ const modifyDocument = async (
 
   await editor.edit(
     editBuilder => {
-      // Insert StyCo
-      editBuilder.insert(
-        document.positionAt(insertPosition),
-        `\n\n${styledComponent}`
-      );
+      // Insert import statement
+      if (importStatement !== null) {
+        editBuilder.insert(
+          document.positionAt(insertPosition),
+          `\n${importStatement}`
+        );
+
+        // Insert StyCo below
+        editBuilder.insert(
+          document.positionAt(insertPosition + 1),
+          `\n${styledComponent}\n`
+        );
+      } else {
+        // Insert StyCo
+        editBuilder.insert(
+          document.positionAt(insertPosition),
+          `\n\n${styledComponent}\n`
+        );
+      }
 
       // Remove style-attribute
       if (styleAttr !== null) {

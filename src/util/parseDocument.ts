@@ -32,6 +32,8 @@ export interface IStyleAttribute {
 const findTagAndInsertPosition = (file: File, offset: number) => {
   let selectedElement: JSXElement | undefined;
   let insertPosition: number = 0;
+  let importStatementExisting = false;
+
   traverse(file, {
     JSXElement: enter => {
       if (enter.node.start === null || enter.node.start > offset) {
@@ -44,15 +46,22 @@ const findTagAndInsertPosition = (file: File, offset: number) => {
         selectedElement = enter.node;
       }
     },
-    // Just find last Import Statement
     ImportDeclaration: enter => {
+      // Just find last Import Statement
       if (enter.node.end !== null) {
         insertPosition = enter.node.end;
+      }
+
+      // Check wether 'styled' is already imported
+      if (
+        enter.node.specifiers.find(s => s.local.name === "styled") !== undefined
+      ) {
+        importStatementExisting = true;
       }
     },
   });
 
-  return { selectedElement, insertPosition };
+  return { selectedElement, insertPosition, importStatementExisting };
 };
 
 const supportedValueTypes = [
@@ -96,10 +105,11 @@ const getStyleAttribute = (element: JSXElement): IStyleAttribute | null => {
 export const parseDocument = (text: string, currentOffset: number) => {
   const file = parse(text, babelOptions);
 
-  const { selectedElement, insertPosition } = findTagAndInsertPosition(
-    file,
-    currentOffset
-  );
+  const {
+    selectedElement,
+    insertPosition,
+    importStatementExisting,
+  } = findTagAndInsertPosition(file, currentOffset);
 
   if (selectedElement === undefined) {
     throw new Error("Could not find element");
@@ -114,6 +124,7 @@ export const parseDocument = (text: string, currentOffset: number) => {
     selectedElement,
     elementName,
     insertPosition,
+    importStatementExisting,
     styleAttr,
   };
 };
