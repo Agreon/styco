@@ -1,5 +1,6 @@
 import { window, workspace, TextEditor, Range } from "vscode";
-import { JSXElement, JSXIdentifier } from "@babel/types";
+import { posix } from "path";
+import { JSXElement } from "@babel/types";
 import { parseDocument, IStyleAttribute } from "./parsing";
 import { generateStyledComponent } from "./generation";
 
@@ -15,22 +16,21 @@ export const stycoCommand = async () => {
     return;
   }
 
-  const documentInformation = parseDocument(editor);
-  if (!documentInformation) {
-    window.showInformationMessage("Could not find element or style attribute");
-    return;
-  }
+  const documentInformation = parseDocument(
+    editor.document.getText(),
+    editor.document.offsetAt(editor.selection.active)
+  );
 
   const {
     selectedElement,
     elementName,
     insertPosition,
-    styleAttr
+    styleAttr,
   } = documentInformation;
 
   const stycoName = await window.showInputBox({
     prompt: "Name: ",
-    placeHolder: "Name of the component"
+    placeHolder: "Name of the component",
   });
 
   if (!stycoName) {
@@ -68,17 +68,14 @@ const modifyDocument = async (
   stycoName: string
 ) => {
   const { document } = editor;
-  const openName = oldElement.openingElement.name as JSXIdentifier;
-  const closeName =
-    oldElement.closingElement !== null
-      ? (oldElement.closingElement.name as JSXIdentifier)
-      : null;
+  const openName = oldElement.openingElement.name;
+  const closeName = oldElement.closingElement?.name;
 
   await editor.edit(
     editBuilder => {
       // Insert StyCo
       editBuilder.insert(
-        editor.document.positionAt(insertPosition),
+        document.positionAt(insertPosition),
         `\n\n${styledComponent}`
       );
 
@@ -102,7 +99,7 @@ const modifyDocument = async (
       );
 
       // Rename Closing Tag
-      if (closeName !== null) {
+      if (closeName !== undefined) {
         editBuilder.replace(
           new Range(
             document.positionAt(closeName.start!),

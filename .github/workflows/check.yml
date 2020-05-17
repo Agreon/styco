@@ -1,11 +1,11 @@
-name: lint
+name: check
 on:
   push:
     branches:
       - master
 jobs:
   lint:
-    name: lint
+    name: check
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
@@ -18,3 +18,5 @@ jobs:
       run: yarn
     - name: Lint
       run: yarn lint
+    - name: Test
+      run: yarn test

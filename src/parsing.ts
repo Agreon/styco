@@ -1,5 +1,4 @@
-import { TextEditor } from "vscode";
-import { parse } from "@babel/parser";
+import { parse, ParserOptions } from "@babel/parser";
 import traverse from "@babel/traverse";
 import {
   JSXElement,
@@ -10,6 +9,18 @@ import {
   StringLiteral,
 } from "@babel/types";
 
+const babelOptions: ParserOptions = {
+  sourceType: "module",
+  plugins: [
+    "jsx",
+    "typescript",
+    ["decorators", { decoratorsBeforeExport: true }],
+    "classProperties",
+    "optionalChaining",
+    "nullishCoalescingOperator",
+  ],
+};
+
 export type Property = { key: string; value: string };
 
 export interface IStyleAttribute {
@@ -18,15 +29,12 @@ export interface IStyleAttribute {
   properties: Property[];
 }
 
-const findTagAndInsertPosition = (editor: TextEditor, file: File) => {
-  const pos = editor.document.offsetAt(editor.selection.active);
-
+const findTagAndInsertPosition = (file: File, offset: number) => {
   let selectedElement: JSXElement | undefined;
   let insertPosition: number = 0;
-
   traverse(file, {
     JSXElement: enter => {
-      if (enter.node.start === null || enter.node.start > pos) {
+      if (enter.node.start === null || enter.node.start > offset) {
         return;
       }
       if (
@@ -47,6 +55,11 @@ const findTagAndInsertPosition = (editor: TextEditor, file: File) => {
   return { selectedElement, insertPosition };
 };
 
+const supportedValueTypes = [
+  "StringLiteral" || "NumericLiteral",
+  "TemplateLiteral",
+];
+
 const getStyleAttribute = (element: JSXElement): IStyleAttribute | null => {
   const styleAttr = element.openingElement.attributes.find(
     a => a.type === "JSXAttribute" && a.name.name === "style"
@@ -61,13 +74,10 @@ const getStyleAttribute = (element: JSXElement): IStyleAttribute | null => {
     return null;
   }
 
-  // Transform properties
+  // Filter and transform properties
   const properties = (styleAttr.value.expression.properties.filter(
     p =>
-      p.type === "ObjectProperty" &&
-      (p.value.type === "StringLiteral" ||
-        p.value.type === "NumericLiteral" ||
-        p.value.type === "TemplateLiteral")
+      p.type === "ObjectProperty" && supportedValueTypes.includes(p.value.type)
   ) as ObjectProperty[]).map(p => ({
     key: p.key.name as string,
     value:
@@ -83,40 +93,27 @@ const getStyleAttribute = (element: JSXElement): IStyleAttribute | null => {
   };
 };
 
-export const parseDocument = (editor: TextEditor) => {
-  try {
-    const file = parse(editor.document.getText(), {
-      sourceType: "module",
-      plugins: [
-        "jsx",
-        "typescript",
-        ["decorators", { decoratorsBeforeExport: true }],
-        "classProperties",
-        "optionalChaining",
-      ],
-    });
+export const parseDocument = (text: string, currentOffset: number) => {
+  const file = parse(text, babelOptions);
 
-    const { selectedElement, insertPosition } = findTagAndInsertPosition(
-      editor,
-      file
-    );
+  const { selectedElement, insertPosition } = findTagAndInsertPosition(
+    file,
+    currentOffset
+  );
 
-    if (selectedElement === undefined) {
-      throw new Error("Could not find element");
-    }
-
-    const elementName = (selectedElement.openingElement.name as JSXIdentifier)
-      .name;
-
-    const styleAttr = getStyleAttribute(selectedElement);
-
-    return {
-      selectedElement,
-      elementName,
-      insertPosition,
-      styleAttr,
-    };
-  } catch (e) {
-    return null;
+  if (selectedElement === undefined) {
+    throw new Error("Could not find element");
   }
+
+  const elementName = (selectedElement.openingElement.name as JSXIdentifier)
+    .name;
+
+  const styleAttr = getStyleAttribute(selectedElement);
+
+  return {
+    selectedElement,
+    elementName,
+    insertPosition,
+    styleAttr,
+  };
 };
