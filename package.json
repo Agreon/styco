@@ -36,6 +36,11 @@
     "configuration": {
       "title": "StyCo",
       "properties": {
+        "styco.insertImportStatement": {
+          "type": "boolean",
+          "default": true,
+          "description": "Insert import statement of the detected library if not existent"
+        },
         "styco.orderStyleByName": {
           "type": "boolean",
           "default": false,
