@@ -2,6 +2,12 @@
 
 All notable changes to the "styco" extension will be documented in this file.
 
+
+## [0.2.1]
+
+- Fix missing support for numeric values.
+
+
 ## [0.2.0]
 
 - Automatically create import statement if not existent (#1).

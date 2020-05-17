@@ -65,7 +65,8 @@ const findTagAndInsertPosition = (file: File, offset: number) => {
 };
 
 const supportedValueTypes = [
-  "StringLiteral" || "NumericLiteral",
+  "StringLiteral",
+  "NumericLiteral",
   "TemplateLiteral",
 ];
 
