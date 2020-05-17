@@ -1,4 +1,4 @@
-import { parseDocument } from "../parsing";
+import { parseDocument } from "../util/parseDocument";
 
 test("simple transformation should work", () => {
   const t = `

@@ -1,5 +1,5 @@
 import { workspace } from "vscode";
-import { Property, IStyleAttribute } from "./parsing";
+import { Property, IStyleAttribute } from "./parseDocument";
 import generate from "@babel/generator";
 import {
   variableDeclaration,

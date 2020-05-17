@@ -1,8 +1,7 @@
 import { window, workspace, TextEditor, Range } from "vscode";
-import { posix } from "path";
 import { JSXElement } from "@babel/types";
-import { parseDocument, IStyleAttribute } from "./parsing";
-import { generateStyledComponent } from "./generation";
+import { parseDocument, IStyleAttribute } from "./util/parseDocument";
+import { generateStyledComponent } from "./util/generateStyledComponent";
 
 export const COMMAND_NAME = "extension.styco";
 
