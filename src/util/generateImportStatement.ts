@@ -7,7 +7,29 @@ import {
   identifier,
   stringLiteral,
   importDefaultSpecifier,
+  importSpecifier,
 } from "@babel/types";
+
+interface IStyleLibrary {
+  packageName: string;
+  importPath?: string;
+  defaultImport?: boolean;
+}
+
+const supportedLibraries: IStyleLibrary[] = [
+  {
+    packageName: "styled-components",
+    defaultImport: true,
+  },
+  {
+    packageName: "@emotion/styled",
+    defaultImport: true,
+  },
+  {
+    packageName: "linaria",
+    importPath: "linaria/react",
+  },
+];
 
 /**
  * Searches the file tree recursive for the nearest package.json
@@ -32,17 +54,15 @@ const findPackageJSONPath = async (folderUri: Uri): Promise<Uri | null> => {
   return findPackageJSONPath(parentFolderUri);
 };
 
-type UsedStyleLibrary = "styled-components" | "@emotion/styled";
-
 const extractUsedStyleLibrary = async (
   fileUri: Uri
-): Promise<UsedStyleLibrary | undefined> => {
+): Promise<IStyleLibrary | undefined> => {
   const content = await workspace.fs.readFile(fileUri);
   const jsonContent = JSON.parse(new TextDecoder("utf-8").decode(content));
 
-  return Object.keys(jsonContent.dependencies).find(dep =>
-    ["styled-components", "@emotion/styled"].includes(dep)
-  ) as UsedStyleLibrary | undefined;
+  return supportedLibraries.find(lib =>
+    Object.keys(jsonContent.dependencies).includes(lib.packageName)
+  );
 };
 
 export const generateImportStatement = async (
@@ -65,8 +85,12 @@ export const generateImportStatement = async (
 
   return generate(
     importDeclaration(
-      [importDefaultSpecifier(identifier("styled"))],
-      stringLiteral(usedStyleLibrary)
+      [
+        usedStyleLibrary.defaultImport
+          ? importDefaultSpecifier(identifier("styled"))
+          : importSpecifier(identifier("styled"), identifier("styled")),
+      ],
+      stringLiteral(usedStyleLibrary.importPath || usedStyleLibrary.packageName)
     )
   ).code;
 };

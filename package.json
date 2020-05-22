@@ -2,7 +2,7 @@
   "name": "styco",
   "displayName": "styco - styled components converter",
   "description": "Transform tags with inline style-props to styled components",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "engines": {
     "vscode": "^1.41.0"
   },
@@ -21,6 +21,8 @@
     "converter",
     "styled components",
     "styled-components",
+    "linaria",
+    "emotion",
     "css-in-js",
     "javascript",
     "typescript",
