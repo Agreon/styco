@@ -35,6 +35,11 @@ const config = {
           },
         ],
       },
+      {
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: "javascript/auto"
+      }
     ],
   },
 };

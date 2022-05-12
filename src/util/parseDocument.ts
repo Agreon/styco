@@ -7,6 +7,7 @@ import {
   JSXAttribute,
   ObjectProperty,
   StringLiteral,
+  Identifier,
 } from "@babel/types";
 
 const babelOptions: ParserOptions = {
@@ -89,7 +90,7 @@ const getStyleAttribute = (element: JSXElement): IStyleAttribute | null => {
     p =>
       p.type === "ObjectProperty" && supportedValueTypes.includes(p.value.type)
   ) as ObjectProperty[]).map(p => ({
-    key: p.key.name as string,
+    key: (p.key as Identifier).name as string,
     value:
       p.value.type === "TemplateLiteral"
         ? p.value.quasis.map(el => el.value.raw).join("")

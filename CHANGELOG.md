@@ -2,6 +2,10 @@
 
 All notable changes to the "styco" extension will be documented in this file.
 
+## [0.2.3]
+
+- Add support for type imports (and other newer typescript features).
+
 ## [0.2.2]
 
 - Add support for [linaria](https://github.com/callstack/linaria).
