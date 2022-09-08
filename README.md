@@ -1,6 +1,6 @@
 # StyCo README
 
-Transform JSX-Tags with style-props to styled components. 
+Transform JSX-Tags with style-props to styled components.
 
 VSCode Marketplace: [Link](https://marketplace.visualstudio.com/items?itemName=DanielHuth.styco)
 
@@ -23,3 +23,4 @@ There are several options that can be found in the options.
 - `orderStyleByName`: Order styles by name alphabetically. (default: `false`)
 - `saveAfterExecute`: Save the file after command execution. (default: `true`)
 - `disableCodeAction`: Don't show a CodeAction if a `style`-Attribute is found. (default: `false`)
+- `objectSyntax`: Output the styled component in object syntax. (default: `false`)

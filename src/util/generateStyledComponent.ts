@@ -10,6 +10,9 @@ import {
   callExpression,
   templateLiteral,
   templateElement,
+  objectExpression,
+  objectProperty,
+  stringLiteral,
 } from "@babel/types";
 
 const camelCaseToKebabCase = (input: string) => {
@@ -37,7 +40,33 @@ const generateStyleBlock = (properties: Property[]) => {
   return `\n${stringifiedStyles.join(";\n")};\n`;
 };
 
-export const generateStyledComponent = (
+export const generateStyledComponentWithObjectSyntax = (
+  elementName: string,
+  stycoName: string,
+  styleAttr: IStyleAttribute | null
+) =>
+  generate(
+    variableDeclaration("const", [
+      variableDeclarator(
+        identifier(stycoName),
+        callExpression(
+          // Is default tag? just concat with a '.', otherwise wrap with '()'
+          elementName[0] === elementName[0].toLowerCase()
+          ? memberExpression(identifier("styled"), identifier(elementName))
+          : callExpression(identifier("styled"), [identifier(elementName)]),
+          [
+            objectExpression(styleAttr?.properties?.map(
+              ({key, value}) =>  objectProperty(identifier(key), stringLiteral(value))
+            ) ?? [])
+          ]
+        )
+      ),
+    ])
+  ).code;
+
+
+
+export const generateDefaultStyledComponent = (
   elementName: string,
   stycoName: string,
   styleAttr: IStyleAttribute | null
@@ -59,4 +88,16 @@ export const generateStyledComponent = (
       ),
     ])
   ).code;
+};
+
+export const generateStyledComponent = (
+  elementName: string,
+  stycoName: string,
+  styleAttr: IStyleAttribute | null
+) => {
+  if(workspace.getConfiguration("styco").get("objectSyntax")){
+    return generateStyledComponentWithObjectSyntax(elementName, stycoName, styleAttr);
+  }
+
+  return generateDefaultStyledComponent(elementName, stycoName, styleAttr);
 };

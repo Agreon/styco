@@ -57,6 +57,11 @@
           "type": "boolean",
           "default": false,
           "description": "Show a CodeAction if a `style`-Attribute is found"
+        },
+        "styco.objectSyntax": {
+          "type": "boolean",
+          "default": false,
+          "description": "Output the styled component in object syntax"
         }
       }
     },
