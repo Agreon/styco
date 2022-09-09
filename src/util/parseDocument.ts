@@ -8,6 +8,7 @@ import {
   ObjectProperty,
   StringLiteral,
   Identifier,
+  NumericLiteral,
 } from "@babel/types";
 
 const babelOptions: ParserOptions = {
@@ -22,7 +23,7 @@ const babelOptions: ParserOptions = {
   ],
 };
 
-export type Property = { key: string; value: string };
+export type Property = { key: string; value: string | number };
 
 export interface IStyleAttribute {
   start: number;
@@ -86,16 +87,33 @@ const getStyleAttribute = (element: JSXElement): IStyleAttribute | null => {
   }
 
   // Filter and transform properties
-  const properties = (styleAttr.value.expression.properties.filter(
-    p =>
-      p.type === "ObjectProperty" && supportedValueTypes.includes(p.value.type)
-  ) as ObjectProperty[]).map(p => ({
-    key: (p.key as Identifier).name as string,
-    value:
-      p.value.type === "TemplateLiteral"
-        ? p.value.quasis.map(el => el.value.raw).join("")
-        : (p.value as StringLiteral).value,
-  }));
+  const properties = (
+    styleAttr.value.expression.properties.filter(
+      property =>
+        property.type === "ObjectProperty" &&
+        supportedValueTypes.includes(property.value.type)
+    ) as ObjectProperty[]
+  ).map(property => {
+    let value;
+    switch (property.value.type) {
+      case "TemplateLiteral":
+        value = property.value.quasis.map(el => el.value.raw).join("");
+        break;
+      case "StringLiteral":
+        value = (property.value as StringLiteral).value;
+        break;
+      case "NumericLiteral":
+        value = (property.value as NumericLiteral).value;
+        break;
+      default:
+        throw new Error(`Unexpected value type: ${property.value.type}`);
+    }
+
+    return {
+      key: (property.key as Identifier).name as string,
+      value,
+    };
+  });
 
   return {
     start: styleAttr.start!,
@@ -107,11 +125,8 @@ const getStyleAttribute = (element: JSXElement): IStyleAttribute | null => {
 export const parseDocument = (text: string, currentOffset: number) => {
   const file = parse(text, babelOptions);
 
-  const {
-    selectedElement,
-    insertPosition,
-    importStatementExisting,
-  } = findTagAndInsertPosition(file, currentOffset);
+  const { selectedElement, insertPosition, importStatementExisting } =
+    findTagAndInsertPosition(file, currentOffset);
 
   if (selectedElement === undefined) {
     throw new Error("Could not find element");
