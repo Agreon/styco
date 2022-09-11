@@ -13,6 +13,7 @@ import {
   objectExpression,
   objectProperty,
   stringLiteral,
+  numericLiteral,
 } from "@babel/types";
 
 const camelCaseToKebabCase = (input: string) => {
@@ -52,19 +53,32 @@ export const generateStyledComponentWithObjectSyntax = (
         callExpression(
           // Is default tag? just concat with a '.', otherwise wrap with '()'
           elementName[0] === elementName[0].toLowerCase()
-          ? memberExpression(identifier("styled"), identifier(elementName))
-          : callExpression(identifier("styled"), [identifier(elementName)]),
+            ? memberExpression(identifier("styled"), identifier(elementName))
+            : callExpression(identifier("styled"), [identifier(elementName)]),
           [
-            objectExpression(styleAttr?.properties?.map(
-              ({key, value}) =>  objectProperty(identifier(key), stringLiteral(value))
-            ) ?? [])
+            objectExpression(
+              styleAttr?.properties?.map(({ key, value }) => {
+                let propertyValue;
+                switch (typeof value) {
+                  case "string":
+                    propertyValue = stringLiteral(value);
+                    break;
+                  case "number":
+                    propertyValue = numericLiteral(value);
+                    break;
+                  default:
+                    const exhaustiveCheck: never = value;
+                    throw new Error(`Unexpected type: ${exhaustiveCheck}`);
+                }
+
+                return objectProperty(identifier(key), propertyValue);
+              }) ?? []
+            ),
           ]
         )
       ),
     ])
   ).code;
-
-
 
 export const generateDefaultStyledComponent = (
   elementName: string,
@@ -95,8 +109,12 @@ export const generateStyledComponent = (
   stycoName: string,
   styleAttr: IStyleAttribute | null
 ) => {
-  if(workspace.getConfiguration("styco").get("objectSyntax")){
-    return generateStyledComponentWithObjectSyntax(elementName, stycoName, styleAttr);
+  if (workspace.getConfiguration("styco").get("objectSyntax")) {
+    return generateStyledComponentWithObjectSyntax(
+      elementName,
+      stycoName,
+      styleAttr
+    );
   }
 
   return generateDefaultStyledComponent(elementName, stycoName, styleAttr);
