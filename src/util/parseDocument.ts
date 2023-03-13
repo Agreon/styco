@@ -72,6 +72,52 @@ const supportedValueTypes = [
   "TemplateLiteral",
 ];
 
+const acceptsUnitlessNumber = [
+  "animationIterationCount",
+  "borderImageOutset",
+  "borderImageSlice",
+  "borderImageWidth",
+  "boxFlex",
+  "boxFlexGroup",
+  "boxOrdinalGroup",
+  "columnCount",
+  "columns",
+  "flex",
+  "flexGrow",
+  "flexPositive",
+  "flexShrink",
+  "flexNegative",
+  "flexOrder",
+  "gridRow",
+  "gridRowEnd",
+  "gridRowSpan",
+  "gridRowStart",
+  "gridColumn",
+  "gridColumnEnd",
+  "gridColumnSpan",
+  "gridColumnStart",
+  "fontWeight",
+  "lineClamp",
+  "lineHeight",
+  "opacity",
+  "order",
+  "orphans",
+  "tabSize",
+  "widows",
+  "zIndex",
+  "zoom",
+
+  // SVG-related properties
+  "fillOpacity",
+  "floodOpacity",
+  "stopOpacity",
+  "strokeDasharray",
+  "strokeDashoffset",
+  "strokeMiterlimit",
+  "strokeOpacity",
+  "strokeWidth",
+];
+
 const getStyleAttribute = (element: JSXElement): IStyleAttribute | null => {
   const styleAttr = element.openingElement.attributes.find(
     a => a.type === "JSXAttribute" && a.name.name === "style"
@@ -94,6 +140,8 @@ const getStyleAttribute = (element: JSXElement): IStyleAttribute | null => {
         supportedValueTypes.includes(property.value.type)
     ) as ObjectProperty[]
   ).map(property => {
+    const key = (property.key as Identifier).name as string;
+
     let value;
     switch (property.value.type) {
       case "TemplateLiteral":
@@ -104,13 +152,16 @@ const getStyleAttribute = (element: JSXElement): IStyleAttribute | null => {
         break;
       case "NumericLiteral":
         value = (property.value as NumericLiteral).value;
+        if (!acceptsUnitlessNumber.includes(key)) {
+          value = `${value}px`;
+        }
         break;
       default:
         throw new Error(`Unexpected value type: ${property.value.type}`);
     }
 
     return {
-      key: (property.key as Identifier).name as string,
+      key,
       value,
     };
   });
