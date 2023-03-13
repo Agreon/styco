@@ -2,6 +2,9 @@
 
 All notable changes to the "styco" extension will be documented in this file.
 
+## [0.2.6]
+-  Suffix raw numbers with px (Thanks to [theodorton](https://github.com/theodorton))
+
 ## [0.2.5]
 
 -  Support raw number values, in addition to strings (Thanks to [schpet](https://github.com/schpet))
